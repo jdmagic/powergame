@@ -5,6 +5,7 @@ const desertBlockAtlasPos = Vector2i(1, 0)
 const grassBlockAtlasPos = Vector2i(2, 0)
 const tundraBlockAtlasPos = Vector2i(3,0)
 const mainSource = 0
+const boardSize = 25
 var rng = RandomNumberGenerator.new()
 
 # Called when the node enters the scene tree for the first time.
@@ -16,8 +17,8 @@ func _ready() -> void:
 # this function handles the initial creation of a world. 
 func initalizeTerrain() -> void:
 	var blockType = Vector2i(-1, 0)
-	for y in range(25):
-		for x in range(25):
+	for y in range(boardSize):
+		for x in range(boardSize):
 			blockType = Vector2i(-1, 0)
 			var sameOrNew = rng.randi_range(1, 5)
 
@@ -74,8 +75,8 @@ func selectRandomBlock() -> Vector2i:
 # if any given tile has no direct neighbors using the same texture, then 
 # replace that tile with the texture of one of its neighbors. 
 func initialSmoothingPass() -> void:
-	for y in range(25):
-		for x in range(25):
+	for y in range(boardSize):
+		for x in range(boardSize):
 			var current_texture = get_cell_atlas_coords(0, Vector2i(x, y))
 			var possible_replacements: Array[Vector2i] = []
 			var needs_smoothing = true
@@ -85,9 +86,9 @@ func initialSmoothingPass() -> void:
 				needs_smoothing = false
 			elif y > 0 and get_cell_atlas_coords(0, Vector2i(x, y - 1)) == current_texture:
 				needs_smoothing = false
-			elif x < 24 and get_cell_atlas_coords(0, Vector2i(x + 1, y)) == current_texture:
+			elif x < boardSize - 1 and get_cell_atlas_coords(0, Vector2i(x + 1, y)) == current_texture:
 				needs_smoothing = false
-			elif y < 24 and get_cell_atlas_coords(0, Vector2i(x, y + 1)) == current_texture:
+			elif y < boardSize - 1 and get_cell_atlas_coords(0, Vector2i(x, y + 1)) == current_texture:
 				needs_smoothing = false
 
 			# only collect neighbors and smooth if no neighbors matched
@@ -96,9 +97,9 @@ func initialSmoothingPass() -> void:
 					possible_replacements.append(get_cell_atlas_coords(0, Vector2i(x - 1, y)))
 				if y > 0:
 					possible_replacements.append(get_cell_atlas_coords(0, Vector2i(x, y - 1)))
-				if x < 24:
+				if x < boardSize - 1:
 					possible_replacements.append(get_cell_atlas_coords(0, Vector2i(x + 1, y)))
-				if y < 24:
+				if y < boardSize - 1:
 					possible_replacements.append(get_cell_atlas_coords(0, Vector2i(x, y + 1)))
 
 				# replace the tile with a random texture from its neighbors
