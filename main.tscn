@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://c3kcm6b0r454"]
+
+[ext_resource type="PackedScene" uid="uid://csqgupjqe1v4p" path="res://worldtiles.tscn" id="1_gfi8s"]
+
+[node name="main" type="Node2D"]
+
+[node name="Camera2D" type="Camera2D" parent="."]
+
+[node name="TileMap" parent="." instance=ExtResource("1_gfi8s")]
+y_sort_enabled = true
+layer_0/y_sort_enabled = true
