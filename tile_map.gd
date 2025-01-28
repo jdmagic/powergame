@@ -104,7 +104,7 @@ func initialSmoothingPass() -> void:
 				# replace the tile with a random texture from its neighbors
 				if possible_replacements.size() > 0:
 					var new_texture = possible_replacements[rng.randi_range(0, possible_replacements.size() - 1)]
-					set_cell(0, Vector2i(x, y), 0, new_texture)
+					set_cell(0, Vector2i(x, y), mainSource, new_texture)
 					print("Smoothed block at (", x, ",", y, ")")
 
 
