@@ -9,28 +9,50 @@ var rng = RandomNumberGenerator.new()
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	initalizeTerrain()
+	initialSmoothingPass()
+	
+
+# this function handles the initial creation of a world. 
+func initalizeTerrain() -> void:
 	var blockType = Vector2i(-1, 0)
 	for y in range(25):
 		for x in range(25):
 			blockType = Vector2i(-1, 0)
-			var sameOrNew = rng.randi_range(1, 3)
+			var sameOrNew = rng.randi_range(1, 5)
 
-			# Check block above
-			if sameOrNew == 3 and y > 0: 
-				var sameX = get_cell_atlas_coords(0, Vector2i(x, y - 1))
-				if sameX != Vector2i(-1, -1):  # Check for valid coordinates
-					blockType = sameX
+			var validX = false
+			var validY = false
 			
-			# Check block to the left
-			if sameOrNew == 2 and x > 0:
-				var sameY = get_cell_atlas_coords(0, Vector2i(x - 1, y))
-				if sameY != Vector2i(-1, -1):  # Check for valid coordinates
+			if sameOrNew > 1: # use a block that matches a nearby one 
+				var sameX = Vector2i(-1, 0)
+				var sameY = Vector2i(-1, 0)
+				
+
+				# check block above	
+				if y > 0: 
+					sameX = get_cell_atlas_coords(0, Vector2i(x, y - 1))
+					validX = true
+				# check block to the left
+				if x > 0:
+					sameY = get_cell_atlas_coords(0, Vector2i(x - 1, y))
+					validY = true
+
+				# if both blocks are valid, use a random one
+				# if only one is valid, use that one
+				if validX && validY:
+					var aboveOrSide = rng.randi_range(1, 2)
+					if aboveOrSide == 1: blockType = sameX
+					else: blockType = sameY
+				else: if validX:
+					blockType = sameX
+				else: if validY:
 					blockType = sameY
 			
-			# Fallback: Random block type if blockType is invalid
-			if blockType.x == -1 or blockType.y < 0: 
-				var newBlockType = rng.randi_range(0, 3)
-				blockType = Vector2i(newBlockType, 0)
+			# random block type if that's what was randomly chosen,
+			# or if there was no valid neighbor block to copy from.
+			if sameOrNew == 1 || (!validX && !validY): 
+				blockType = selectRandomBlock()
 			
 			# Debugging: Log the block type and position
 			print("Placing block at (", x, ", ", y, ") with blockType: ", blockType)
@@ -40,6 +62,51 @@ func _ready() -> void:
 				set_cell(0, Vector2i(x, y), mainSource, blockType)
 			else:
 				print("Error: mainSource is null!")
+
+# this function is used to generate random blocks when needed. 
+# "biome distribution" should be fully controlled by this function.
+# therefore, use this when possible elsewhere, 
+# and edit this to edit biome distribution.
+func selectRandomBlock() -> Vector2i:
+	var randomnum = rng.randi_range(1,3)
+	return Vector2i(randomnum, 0)
+
+# if any given tile has no direct neighbors using the same texture, then 
+# replace that tile with the texture of one of its neighbors. 
+func initialSmoothingPass() -> void:
+	for y in range(25):
+		for x in range(25):
+			var current_texture = get_cell_atlas_coords(0, Vector2i(x, y))
+			var possible_replacements: Array[Vector2i] = []
+			var needs_smoothing = true
+
+			# check neighbors one by one; exit early if a match is found
+			if x > 0 and get_cell_atlas_coords(0, Vector2i(x - 1, y)) == current_texture:
+				needs_smoothing = false
+			elif y > 0 and get_cell_atlas_coords(0, Vector2i(x, y - 1)) == current_texture:
+				needs_smoothing = false
+			elif x < 24 and get_cell_atlas_coords(0, Vector2i(x + 1, y)) == current_texture:
+				needs_smoothing = false
+			elif y < 24 and get_cell_atlas_coords(0, Vector2i(x, y + 1)) == current_texture:
+				needs_smoothing = false
+
+			# only collect neighbors and smooth if no neighbors matched
+			if needs_smoothing:
+				if x > 0:
+					possible_replacements.append(get_cell_atlas_coords(0, Vector2i(x - 1, y)))
+				if y > 0:
+					possible_replacements.append(get_cell_atlas_coords(0, Vector2i(x, y - 1)))
+				if x < 24:
+					possible_replacements.append(get_cell_atlas_coords(0, Vector2i(x + 1, y)))
+				if y < 24:
+					possible_replacements.append(get_cell_atlas_coords(0, Vector2i(x, y + 1)))
+
+				# replace the tile with a random texture from its neighbors
+				if possible_replacements.size() > 0:
+					var new_texture = possible_replacements[rng.randi_range(0, possible_replacements.size() - 1)]
+					set_cell(0, Vector2i(x, y), 0, new_texture)
+					print("Smoothed block at (", x, ",", y, ")")
+
 
 
 
